@@ -7,6 +7,7 @@ class InstagramBot:
 
     def __init__(self, username, password):
         """
+        logs in to the owner's account
         :param username: instagram username
         :param password: instagram password
         """
@@ -39,43 +40,60 @@ class InstagramBot:
         notifications_button = self.driver.find_element_by_xpath("""/html/body/div[4]/div/div/div/div[3]/button[2]""")
         notifications_button.click()
 
-    def navigate_to_home_page(self):
+    def navigate_to_home_page(self, user=None):
         """
-        Opens the home page,
+        Opens to home page,
         once user is logged in
+        empty - owner home page
+        user - this user's home page
         """
-        self.driver.get("https://www.instagram.com/" + self.username + "/")
+        if user is None:
+            self.driver.get("https://www.instagram.com/" + self.username + "/")
+        else:
+            self.driver.get("https://www.instagram.com/" + user + "/")
 
     def get_following_number(self):
         """
-        When on home page,
-        read number of followings
+        read number of followings when
+        located on any home page
+        :returns int value of ↑
         """
         following_num = self.driver.find_element_by_xpath(
             """//*[@id="react-root"]/section/main/div/header/section/ul/li[3]/a/span""")
-        self.number_of_followings = following_num.text
-        
+        temp = " "
+        temp = following_num.text
+        temp = temp.replace(',', '')
+        return int(temp)
 
-
-class UnfollowUsers(InstagramBot):
     def open_following_tab(self):
         """
         opens the following tab when
-        located in the profile tab:
+        located on any home page
         """
         following_buttom = self.driver.find_element_by_xpath(
             """//*[@id="react-root"]/section/main/div/header/section/ul/li[3]/a""")
         following_buttom.click()
 
     def get_following(self, num_to_scrape=10):
-        """'
-        on having the following insta tab open
-        stores the usernames of the users in a list
+        """
+        :returns list of names of followings
+        located on any home page tab
         Args:
             num_to_scrape - how much usernames to read
+                -1 to scrape all
+        test1 - kato mu dadesh da scrapne vsichki raboti
+            ako ne se poqvqt promeni mejduvremenni
+        test2 - kato mu dadesh da scrapne all,
+            se bugva ako ima promeni v procesa
         """
-        if num_to_scrape < 0:
+        if num_to_scrape == -1:
+            num_to_scrape = self.get_following_number()
+            time.sleep(1)
+        elif num_to_scrape <= 0:
             return
+
+        self.open_following_tab()
+        time.sleep(2)
 
         li = []
         while len(li) < num_to_scrape:
@@ -97,16 +115,76 @@ class UnfollowUsers(InstagramBot):
             following_list_.append(item.text.split("\n")[0])
             j = j + 1
 
-        self.following_list = following_list_
+        # self.following_list = following_list_
+        return following_list_
+
+    def unfollow_user(self):
+        """
+        Located on any home page tab
+        unfollow user
+        """
+        follow_menu_button = self.driver.find_element_by_xpath("""//*[@id="react-root"]/section/main/div/header
+        /section/div[1]/div[1]/div/div[2]/div/span/span[1]/button""")
+        follow_menu_button.click()
+        time.sleep(1)
+        unfollow_button = self.driver.find_element_by_xpath("""/html/body/div[4]/div/div/div/div[3]/button[1]""")
+        unfollow_button.click()
+        time.sleep(1)
 
 
-instagram = UnfollowUsers("nema da mi", "kradesh instata ei")
-time.sleep(1)
-instagram.login()
-time.sleep(1)
-instagram.navigate_to_home_page()
-time.sleep(1)
-instagram.get_following_number()
-print(instagram.number_of_followings)
-time.sleep(5)
-instagram.driver.quit()
+class UnfollowUsers(InstagramBot):
+    def read_all_user_followings(self, user):
+        """
+        :param user: user to scrape
+        :return: full list of followers
+        """
+        self.navigate_to_home_page(user)
+        time.sleep(1)
+        all_user_followings = self.get_following(-1)
+        return all_user_followings
+
+    def check_if_user_follows_back(self, user):
+        """
+        :param user: user to check
+        :return: True if following back
+                 False if not
+        """
+        try:
+            user_list = self.read_all_user_followings(user)
+        except:
+            return False
+        if self.username in user_list:
+            return True
+        else:
+            return False
+
+    def start_unfollowing(self, num_to_unfollow=20):
+        time.sleep(1)
+        self.login()
+        time.sleep(1)
+        self.navigate_to_home_page()
+        time.sleep(2)
+        following_list = self.get_following(num_to_unfollow * 10)
+        time.sleep(2)
+        users_unfollowed_counter = 0
+        for user in following_list:
+            time.sleep(1)
+            if not self.check_if_user_follows_back(user):
+                users_unfollowed_counter = users_unfollowed_counter + 1
+                if (users_unfollowed_counter >= num_to_unfollow):
+                    return
+                time.sleep(1)
+                self.navigate_to_home_page(user)
+                time.sleep(1)
+                self.unfollow_user()
+                time.sleep(1)
+
+
+instagram = UnfollowUsers("kappa", "kappa2")
+instagram.start_unfollowing()
+
+
+"""
+1vi probelm - kato scrolva se bugva i ne zarejda sledvashtite
+2ri problem - kato scrolva prosto spira i ne pravi nishto pri mnogo hora
+"""
