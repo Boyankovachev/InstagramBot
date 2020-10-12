@@ -3,6 +3,18 @@ import os
 import time
 
 
+def enter_credentials():
+    """
+    Ask for username and password
+    :returns tuple of username and password
+    """
+    print("Enter username: ")
+    username = input()
+    print("Enter password: ")
+    password = input()
+    return username, password
+
+
 class InstagramBot:
 
     def __init__(self, username, password):
@@ -171,7 +183,7 @@ class UnfollowUsers(InstagramBot):
             time.sleep(1)
             if not self.check_if_user_follows_back(user):
                 users_unfollowed_counter = users_unfollowed_counter + 1
-                if (users_unfollowed_counter >= num_to_unfollow):
+                if users_unfollowed_counter >= num_to_unfollow:
                     return
                 time.sleep(1)
                 self.navigate_to_home_page(user)
@@ -182,7 +194,6 @@ class UnfollowUsers(InstagramBot):
 
 instagram = UnfollowUsers("kappa", "kappa2")
 instagram.start_unfollowing()
-
 
 """
 1vi probelm - kato scrolva se bugva i ne zarejda sledvashtite
