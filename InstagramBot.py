@@ -200,8 +200,7 @@ class UnfollowUsers(InstagramBot):
 
 
 instagram = UnfollowUsers(*read_credentials())
-instagram.login()
-
+instagram.start_unfollowing()
 """
 1vi probelm - kato scrolva se bugva i ne zarejda sledvashtite
 2ri problem - kato scrolva prosto spira i ne pravi nishto pri mnogo hora
