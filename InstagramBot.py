@@ -204,4 +204,5 @@ instagram.start_unfollowing()
 """
 1vi probelm - kato scrolva se bugva i ne zarejda sledvashtite
 2ri problem - kato scrolva prosto spira i ne pravi nishto pri mnogo hora
+3ti problem - da chaka do poqva na element vmesto time.sleep
 """
