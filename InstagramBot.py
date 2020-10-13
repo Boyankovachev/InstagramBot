@@ -1,17 +1,24 @@
 from selenium import webdriver
-import os
 import time
 
 
-def enter_credentials():
+def read_credentials():
+    """"
+    Returns a tuple of
+    the username and password
     """
-    Ask for username and password
-    :returns tuple of username and password
-    """
-    print("Enter username: ")
-    username = input()
-    print("Enter password: ")
-    password = input()
+    file = open("credentials.txt", "r")
+    username = file.readline()
+    temp = username.split(": ")
+    username = temp[1]
+    if username.endswith("\n"):
+        username = username.rstrip("\n")
+    password = file.readline()
+    temp = password.split(": ")
+    password = temp[1]
+    if password.endswith("\n"):
+        password = password.rstrip("\n")
+    file.close()
     return username, password
 
 
@@ -192,8 +199,8 @@ class UnfollowUsers(InstagramBot):
                 time.sleep(1)
 
 
-instagram = UnfollowUsers("kappa", "kappa2")
-instagram.start_unfollowing()
+instagram = UnfollowUsers(*read_credentials())
+instagram.login()
 
 """
 1vi probelm - kato scrolva se bugva i ne zarejda sledvashtite
