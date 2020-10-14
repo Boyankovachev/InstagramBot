@@ -45,31 +45,26 @@ class InstagramBot:
         - accept all cookies
         - enter credentials
         """
-
-        # accept_cookies = self.driver.find_element_by_xpath("/html/body/div[2]/div/div/div/div[2]/button[1]")
-        # accept_cookies.click()
-        # time.sleep(1)
-        try:
-            accept_cookies_wait = WebDriverWait(self.driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, "/html/body/div[2]/div/div/div/div[2]/button[1]"))
-            )
-            accept_cookies_wait.click()
-        except:
-            self.driver.quit()
-            print("poopy stinky")
+        accept_cookies_wait = WebDriverWait(self.driver, 20).until(
+             EC.presence_of_element_located((By.XPATH, "/html/body/div[2]/div/div/div/div[2]/button[1]"))
+        )
+        accept_cookies_wait.click()
+        login_button = WebDriverWait(self.driver, 20).until(
+            EC.presence_of_element_located((By.XPATH, """//*[@id="loginForm"]/div/div[3]"""))
+        )
         username_tab = self.driver.find_element_by_xpath("""//*[@id="loginForm"]/div/div[1]/div/label/input""")
         password_tab = self.driver.find_element_by_xpath("""//*[@id="loginForm"]/div/div[2]/div/label/input""")
         username_tab.send_keys(self.username)
         password_tab.send_keys(self.password)
-        login_button = self.driver.find_element_by_xpath("""//*[@id="loginForm"]/div/div[3]""")
         login_button.click()
-        time.sleep(3)
-        login_info_button = self.driver.find_element_by_xpath(
-            """//*[@id="react-root"]/section/main/div/div/div/div/button""")
+        login_info_button = WebDriverWait(self.driver, 20).until(
+            EC.presence_of_element_located((By.XPATH, """//*[@id="react-root"]/section/main/div/div/div/div/button"""))
+        )
         login_info_button.click()
-        time.sleep(1)
-        notifications_button = self.driver.find_element_by_xpath("""/html/body/div[4]/div/div/div/div[3]/button[2]""")
-        notifications_button.click()
+        notifications_button_wait = WebDriverWait(self.driver, 20).until(
+            EC.presence_of_element_located((By.XPATH, """/html/body/div[4]/div/div/div/div[3]/button[2]"""))
+        )
+        notifications_button_wait.click()
 
     def navigate_to_home_page(self, user=None):
         """
@@ -89,8 +84,10 @@ class InstagramBot:
         located on any home page
         :returns int value of ↑
         """
-        following_num = self.driver.find_element_by_xpath(
-            """//*[@id="react-root"]/section/main/div/header/section/ul/li[3]/a/span""")
+        following_num = WebDriverWait(self.driver, 20).until(
+             EC.presence_of_element_located((By.XPATH, """//*[@id="react-root"]/section/main/div/header/section/ul
+             /li[3]/a/span"""))
+        )
         temp = " "
         temp = following_num.text
         temp = temp.replace(',', '')
@@ -101,9 +98,11 @@ class InstagramBot:
         opens the following tab when
         located on any home page
         """
-        following_buttom = self.driver.find_element_by_xpath(
-            """//*[@id="react-root"]/section/main/div/header/section/ul/li[3]/a""")
-        following_buttom.click()
+        following_button = WebDriverWait(self.driver, 20).until(
+             EC.presence_of_element_located((By.XPATH, """//*[@id="react-root"]/section/main/div/header/section/ul
+             /li[3]/a"""))
+        )
+        following_button.click()
 
     def get_following(self, num_to_scrape=10):
         """
@@ -113,7 +112,7 @@ class InstagramBot:
             num_to_scrape - how much usernames to read
                 -1 to scrape all
         test1 - kato mu dadesh da scrapne vsichki raboti
-            ako ne se poqvqt promeni mejduvremenni
+            ako ne se poqvqt promeni mejduvremenni raboti
         test2 - kato mu dadesh da scrapne all,
             se bugva ako ima promeni v procesa
         """
@@ -154,13 +153,16 @@ class InstagramBot:
         Located on any home page tab
         unfollow user
         """
-        follow_menu_button = self.driver.find_element_by_xpath("""//*[@id="react-root"]/section/main/div/header
-        /section/div[1]/div[1]/div/div[2]/div/span/span[1]/button""")
+        follow_menu_button = WebDriverWait(self.driver, 20).until(
+             EC.presence_of_element_located((By.XPATH, """//*[@id="react-root"]/section/main/div/header
+        /section/div[1]/div[1]/div/div[2]/div/span/span[1]/button"""))
+        )
         follow_menu_button.click()
-        time.sleep(1)
-        unfollow_button = self.driver.find_element_by_xpath("""/html/body/div[4]/div/div/div/div[3]/button[1]""")
+
+        unfollow_button = WebDriverWait(self.driver, 20).until(
+             EC.presence_of_element_located((By.XPATH, """/html/body/div[4]/div/div/div/div[3]/button[1]"""))
+        )
         unfollow_button.click()
-        time.sleep(1)
 
 
 class UnfollowUsers(InstagramBot):
@@ -214,6 +216,12 @@ class UnfollowUsers(InstagramBot):
 instagram = UnfollowUsers(*read_credentials())
 # instagram.start_unfollowing()
 instagram.login()
+instagram.navigate_to_home_page()
+print(instagram.get_following_number())
+instagram.open_following_tab()
+instagram.driver.back()
+instagram.navigate_to_home_page("ninainka")
+instagram.unfollow_user()
 """
 1vi probelm - kato scrolva se bugva i ne zarejda sledvashtite
 2ri problem - kato scrolva prosto spira i ne pravi nishto pri mnogo hora
