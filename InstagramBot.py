@@ -1,5 +1,8 @@
 from selenium import webdriver
 import time
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
 def read_credentials():
@@ -42,9 +45,18 @@ class InstagramBot:
         - accept all cookies
         - enter credentials
         """
-        accept_cookies = self.driver.find_element_by_xpath("/html/body/div[2]/div/div/div/div[2]/button[1]")
-        accept_cookies.click()
-        time.sleep(1)
+
+        # accept_cookies = self.driver.find_element_by_xpath("/html/body/div[2]/div/div/div/div[2]/button[1]")
+        # accept_cookies.click()
+        # time.sleep(1)
+        try:
+            accept_cookies_wait = WebDriverWait(self.driver, 20).until(
+                EC.presence_of_element_located((By.XPATH, "/html/body/div[2]/div/div/div/div[2]/button[1]"))
+            )
+            accept_cookies_wait.click()
+        except:
+            self.driver.quit()
+            print("poopy stinky")
         username_tab = self.driver.find_element_by_xpath("""//*[@id="loginForm"]/div/div[1]/div/label/input""")
         password_tab = self.driver.find_element_by_xpath("""//*[@id="loginForm"]/div/div[2]/div/label/input""")
         username_tab.send_keys(self.username)
@@ -200,7 +212,8 @@ class UnfollowUsers(InstagramBot):
 
 
 instagram = UnfollowUsers(*read_credentials())
-instagram.start_unfollowing()
+# instagram.start_unfollowing()
+instagram.login()
 """
 1vi probelm - kato scrolva se bugva i ne zarejda sledvashtite
 2ri problem - kato scrolva prosto spira i ne pravi nishto pri mnogo hora
