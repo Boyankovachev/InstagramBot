@@ -3,7 +3,7 @@ import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-
+import random
 
 def read_credentials():
     """"
@@ -116,6 +116,7 @@ class InstagramBot:
         test2 - kato mu dadesh da scrapne all,
             se bugva ako ima promeni v procesa
         """
+        time.sleep(2)
         if num_to_scrape == -1:
             num_to_scrape = self.get_following_number()
             time.sleep(1)
@@ -172,7 +173,6 @@ class UnfollowUsers(InstagramBot):
         :return: full list of followers
         """
         self.navigate_to_home_page(user)
-        time.sleep(1)
         all_user_followings = self.get_following(-1)
         return all_user_followings
 
@@ -192,38 +192,23 @@ class UnfollowUsers(InstagramBot):
             return False
 
     def start_unfollowing(self, num_to_unfollow=20):
-        time.sleep(1)
         self.login()
-        time.sleep(1)
         self.navigate_to_home_page()
-        time.sleep(2)
         following_list = self.get_following(num_to_unfollow * 10)
-        time.sleep(2)
+        random.shuffle(following_list)
         users_unfollowed_counter = 0
         for user in following_list:
-            time.sleep(1)
             if not self.check_if_user_follows_back(user):
                 users_unfollowed_counter = users_unfollowed_counter + 1
                 if users_unfollowed_counter >= num_to_unfollow:
                     return
-                time.sleep(1)
                 self.navigate_to_home_page(user)
-                time.sleep(1)
                 self.unfollow_user()
-                time.sleep(1)
 
 
 instagram = UnfollowUsers(*read_credentials())
-# instagram.start_unfollowing()
-instagram.login()
-instagram.navigate_to_home_page()
-print(instagram.get_following_number())
-instagram.open_following_tab()
-instagram.driver.back()
-instagram.navigate_to_home_page("ninainka")
-instagram.unfollow_user()
+instagram.start_unfollowing()
 """
 1vi probelm - kato scrolva se bugva i ne zarejda sledvashtite
 2ri problem - kato scrolva prosto spira i ne pravi nishto pri mnogo hora
-3ti problem - da chaka do poqva na element vmesto time.sleep
 """
