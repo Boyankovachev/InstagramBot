@@ -191,13 +191,20 @@ class UnfollowUsers(InstagramBot):
         else:
             return False
 
-    def start_unfollowing(self, num_to_unfollow=20):
+    def start_unfollowing(self, num_to_unfollow=20, max_to_check = -1):
+        """"
+        :param num_to_unfollow: max_users to unfollow
+        :param max_to_check: max follows the users to have
+        for the program to check if he is following back
+        scans num_to_unfollow * 10
+        """
         self.login()
         self.navigate_to_home_page()
         following_list = self.get_following(num_to_unfollow * 10)
         random.shuffle(following_list)
         users_unfollowed_counter = 0
         for user in following_list:
+            
             if not self.check_if_user_follows_back(user):
                 users_unfollowed_counter = users_unfollowed_counter + 1
                 if users_unfollowed_counter >= num_to_unfollow:
