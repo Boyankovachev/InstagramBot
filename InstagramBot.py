@@ -3,6 +3,8 @@ import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.keys import Keys
+
 import random
 
 
@@ -24,6 +26,18 @@ def read_credentials():
         password = password.rstrip("\n")
     file.close()
     return username, password
+
+
+def read_profiles():
+    """
+    :return: list of usernames for the program to
+    use
+    """
+    file = open("profiles.txt", "r")
+    users_list = []
+    for user in file:
+        users_list.append(user.strip())
+    return users_list
 
 
 class InstagramBot:
@@ -85,10 +99,42 @@ class InstagramBot:
         located on any home page
         :returns int value of ↑
         """
-        following_num = WebDriverWait(self.driver, 20).until(
-            EC.presence_of_element_located((By.XPATH, """//*[@id="react-root"]/section/main/div/header/section/ul
-             /li[3]/a/span"""))
-        )
+        try:
+            following_num = WebDriverWait(self.driver, 4).until(
+                EC.presence_of_element_located((By.XPATH, """//*[@id="react-root"]/section/main/div/header/section/ul
+                 /li[3]/a/span"""))
+            )
+        except:
+            # Instagram ima 2ta varianta za butoni
+            # napravi go taka che vmesto sus try except
+            # tursi dali ediniq element go ima i taka
+            following_num = WebDriverWait(self.driver, 4).until(
+                EC.presence_of_element_located((By.XPATH, """/html/body/div[1]/section/main/div/header/section/ul/li[3]/span/span"""))
+            )
+        temp = " "
+        temp = following_num.text
+        temp = temp.replace(',', '')
+        return int(temp)
+
+    def get_followers_number(self):
+        """
+        read number of followers when
+        located on any home page
+        :returns int value of ↑
+        """
+
+        try:
+            following_num = WebDriverWait(self.driver, 4).until(
+                EC.presence_of_element_located((By.XPATH, """//*[@id="react-root"]/section/main/div/header/section/ul
+                 /li[2]/a/span"""))
+            )
+        except:
+            # Instagram ima 2ta varianta za butoni
+            # napravi go taka che vmesto sus try except
+            # tursi dali ediniq element go ima i taka
+            following_num = WebDriverWait(self.driver, 4).until(
+                EC.presence_of_element_located((By.XPATH, """/html/body/div[1]/section/main/div/header/section/ul/li[2]/span/span"""))
+            )
         temp = " "
         temp = following_num.text
         temp = temp.replace(',', '')
@@ -132,9 +178,9 @@ class InstagramBot:
             ul = self.driver.find_element_by_xpath("""/html/body/div[4]/div/div/div[2]/ul""")
             li = ul.find_elements_by_tag_name("li")
 
-            following_pannel = self.driver.find_element_by_xpath("//div[@class='isgrP']")
+            following_panel = self.driver.find_element_by_xpath("//div[@class='isgrP']")
             self.driver.execute_script('arguments[0].scrollTop = arguments[0].scrollTop + arguments[0].offsetHeight;',
-                                       following_pannel)
+                                       following_panel)
 
         ul = self.driver.find_element_by_xpath("""/html/body/div[4]/div/div/div[2]/ul""")
         li = ul.find_elements_by_tag_name("li")
@@ -171,6 +217,21 @@ class InstagramBot:
             EC.presence_of_element_located((By.XPATH, """/html/body/div[4]/div/div/div/div[3]/button[1]"""))
         )
         unfollow_button.click()
+
+    def follow_user(self):
+        """
+        located on any home page tab
+        follow user
+        """
+        try:
+            follow_button = WebDriverWait(self.driver, 5).until(
+                EC.presence_of_element_located((By.XPATH, """/html/body/div[1]/section/main/div/header/section/
+                div[1]/div[2]/div/div/div/span/span[1]/button"""))
+            )
+            follow_button.click()
+        except:
+            return 1
+        return 0
 
 
 class UnfollowUsers(InstagramBot):
@@ -238,8 +299,137 @@ class UnfollowUsers(InstagramBot):
                 return
 
 
+class FollowUsers(InstagramBot):
+    def get_random_user(self):
+        """
+        :return: a string that is a username
+        of a profile to follow from
+        """
+        temp = read_profiles()
+        username = random.choice(temp)
+        return username
+
+    def open_random_post(self, username):
+        """
+        opens a random post from a given
+        username homepage. when opened the webpage laods the first 24
+        without scrolling in lines of 3
+        """
+        choice_list = []
+        for x in range(1, 9):
+            for y in range(1, 4):
+                choice_list.append(
+                    "/html/body/div[1]/section/main/div/div[3]/article/div[1]/div/div[" + str(x) + "]/div[" + str(
+                        y) + "]/a")
+
+        self.navigate_to_home_page(username)
+        image = WebDriverWait(self.driver, 20).until(
+            EC.presence_of_element_located(
+                (By.XPATH, random.choice(choice_list)))
+        )
+        image.click()
+
+    def scroll(self):
+        """
+        when opened likes panel
+        scroll some
+        """
+        time.sleep(1)
+        # likes_panel = self.driver.find_element_by_xpath("""/html/body/div[5]/div/div/div[2]/div""")
+        likes_panel = WebDriverWait(self.driver, 20).until(
+            EC.presence_of_element_located(
+                (By.XPATH, """/html/body/div[5]/div/div/div[2]/div"""))
+        )
+        self.driver.execute_script('arguments[0].scrollTop = arguments[0].scrollTop + arguments[0].offsetHeight;',
+                                   likes_panel)
+
+    def is_eligible_for_follow(self, followers, following):
+        """
+        :return: True of ok to follow
+                 False if not
+        """
+        if followers > 5000 or following > 2500:
+            print(1, end=": ")
+            return False
+        if following > 1000 and followers < following*0.5:
+            print(2, end=": ")
+            return False
+        if followers < 10 or following < 20:
+            print(3, end=": ")
+            return False
+        flag = False
+        if float(followers) > following*1.5:
+            if followers < 100 and following < followers*4:
+                flag = True
+            if 200 > followers >= 100:
+                if following < followers*2:
+                    flag = True
+            if not flag:
+                print(4, end=": ")
+                return False
+        return True
+
+    def start_following(self, num_to_follow):
+        """
+        on open post start following
+        people with the checks and all...
+        """
+        num_followed = 0
+
+        likes_button = WebDriverWait(self.driver, 20).until(
+            EC.presence_of_element_located(
+                (By.XPATH, """/html/body/div[4]/div[2]/div/article/div[3]/section[2]/div/div[2]/button"""))
+        )
+        likes_button.click()
+
+        #wait to open before scraping
+        WebDriverWait(self.driver, 20).until(
+            EC.presence_of_element_located(
+                (By.XPATH, """/html/body/div[4]/div[2]/div/article/div[3]/section[1]/span[1]/button"""))
+        )
+
+        users_list = []
+        users_scraped = 0
+        temp = 1
+        while users_scraped < num_to_follow:
+            try:
+                user_element = WebDriverWait(self.driver, 1).until(
+                    EC.presence_of_element_located(
+                        (By.XPATH, """/html/body/div[5]/div/div/div[2]/div/div/div[""" + str(
+                            temp) + """]/div[2]/div[1]/div/span/a"""))
+                )
+                user = user_element.text
+                if user not in users_list:
+                    users_list.append(user)
+                    users_scraped = users_scraped + 1
+                temp = temp + 1
+            except:
+                temp = 1
+                self.scroll()
+                continue
+
+        for user in users_list:
+            self.navigate_to_home_page(user)
+            if self.is_eligible_for_follow(self.get_followers_number(), self.get_following_number()):
+                #if self.follow_user():
+                #    num_followed = num_followed + 1
+                print(str(self.get_followers_number()) + " / " + str(self.get_following_number()) + " DA")
+            else:
+                print(str(self.get_followers_number()) + " / " + str(self.get_following_number()) + " NE")
+            #time.sleep(7)
+
+
+# /html/body/div[5]/div/div/div[2]/div/div/div[1]/div[2]/div[1]/div/span/a
+# /html/body/div[5]/div/div/div[2]/div/div/div[2]/div[2]/div[1]/div/span/a
+"""
 instagram = UnfollowUsers(*read_credentials())
 instagram.start_unfollowing(5, 500)
+instagram.driver.quit()
+"""
+instagram = FollowUsers(*read_credentials())
+instagram.login()
+instagram.open_random_post(instagram.get_random_user())
+instagram.start_following(10)
 instagram.driver.quit()
 """
 1vi probelm - kato scrolva se bugva i ne zarejda sledvashtite
@@ -247,3 +437,21 @@ instagram.driver.quit()
 3ti problem - ponqkoga prosto skrolva do dolu i nishto ne prai
 (reshenie: dobavi except, koito gi hvashtat logvat gi i produljavat)
 """
+
+# like buton xpath
+# /html/body/div[4]/div[2]/div/article/div[3]/section[2]/div/div[2]/button
+
+
+# /html/body/div[5]/div/div/div[2]/div/div/div[1]/div[2]/div/div/span/a
+# /html/body/div[5]/div/div/div[2]/div/div/div[2]/div[2]/div[1]/div/span/a
+# /html/body/div[5]/div/div/div[2]/div/div/div[3]/div[2]/div[1]/div/span/a
+# /html/body/div[5]/div/div/div[2]/div/div/div[4]/div[2]/div[1]/div/span/a
+# /html/body/div[5]/div/div/div[2]/div/div/div[8]/div[2]/div[1]/div/span/a
+# /html/body/div[5]/div/div/div[2]/div/div/div[9]/div[2]/div[1]/div/span/a
+# /html/body/div[5]/div/div/div[2]/div/div/div[9]/div[2]/div[1]/div/span/a
+
+
+# /html/body/div[4]/div/div/div[2]/ul/div/li[1]/div/div[1]/div[2]/div[1]/span/a
+# /html/body/div[4]/div/div/div[2]/ul/div/li[2]/div/div[1]/div[2]/div[1]/span/a
+# /html/body/div[4]/div/div/div[2]/ul/div/li[3]/div/div[1]/div[2]/div[1]/span/a
+# /html/body/div[4]/div/div/div[2]/ul/div/li[166]/div/div[1]/div[2]/div[1]/span/a
