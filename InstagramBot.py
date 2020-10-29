@@ -477,6 +477,8 @@ class FollowUsers(InstagramBot):
                         num_followed = num_followed + 1
                         users_followed.append(user)
                         # tuka logvash koi e follownal
+                        if num_followed >= num_to_follow:
+                            break
 
         print(users_followed)
 
