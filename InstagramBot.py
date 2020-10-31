@@ -5,7 +5,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import TimeoutException
-
+from selenium.common.exceptions import NoSuchElementException
+import MyLogger
 import random
 
 
@@ -53,6 +54,7 @@ class InstagramBot:
         self.password = password
         self.driver = webdriver.Chrome('C:\chromedriver.exe')
         self.driver.get("https://www.instagram.com/")
+        self.my_logger = MyLogger.MyLogger()
 
     def login(self):
         """
@@ -200,14 +202,22 @@ class InstagramBot:
 
         li = []
         while len(li) < num_to_scrape:
-            ul = self.driver.find_element_by_xpath("""/html/body/div[4]/div/div/div[2]/ul""")
+            try:
+                ul = self.driver.find_element_by_xpath("""/html/body/div[5]/div/div/div[2]/ul""")
+            except NoSuchElementException:
+                ul = self.driver.find_element_by_xpath("""/html/body/div[4]/div/div/div[2]/ul""")
             li = ul.find_elements_by_tag_name("li")
+            # /html/body/div[4]/div/div/div[2]/ul - not such element exception mi hvurli
+            # /html/body/div[5]/div/div/div[2]/ul - sega maika mu deba
 
             following_panel = self.driver.find_element_by_xpath("//div[@class='isgrP']")
             self.driver.execute_script('arguments[0].scrollTop = arguments[0].scrollTop + arguments[0].offsetHeight;',
                                        following_panel)
 
-        ul = self.driver.find_element_by_xpath("""/html/body/div[4]/div/div/div[2]/ul""")
+        try:
+            ul = self.driver.find_element_by_xpath("""/html/body/div[5]/div/div/div[2]/ul""")
+        except NoSuchElementException:
+            ul = self.driver.find_element_by_xpath("""/html/body/div[4]/div/div/div[2]/ul""")
         li = ul.find_elements_by_tag_name("li")
 
         following_list_ = []
@@ -218,7 +228,6 @@ class InstagramBot:
             following_list_.append(item.text.split("\n")[0])
             j = j + 1
 
-        # self.following_list = following_list_
         return following_list_
 
     def unfollow_user(self):
@@ -227,21 +236,32 @@ class InstagramBot:
         unfollow user
         """
         try:
-            follow_menu_button = WebDriverWait(self.driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, """//*[@id="react-root"]/section/main/div/header
-            /section/div[1]/div[1]/div/div[2]/div/span/span[1]/button"""))
+            follow_menu_button = WebDriverWait(self.driver, 5).until(
+                EC.presence_of_element_located((By.XPATH,
+                                                """/html/body/div[1]/section/main/div/header/section/div[1]/div[1]/div/div[2]/div/span/span[1]/button"""))
             )
             follow_menu_button.click()
-        except:
-            follow_menu_button = WebDriverWait(self.driver, 20).until(
-                EC.presence_of_element_located((By.XPATH, """/html/body/div[1]/section/main/div/header/section/ul/li[
-                3]/a/span"""))
+        except TimeoutException:
+            follow_menu_button = WebDriverWait(self.driver, 5).until(
+                EC.presence_of_element_located((By.XPATH, """/html/body/div[1]/section/main/div/header/section/div[1]/div[1]/div/div[3]/div/span/span[1]/button"""))
             )
             follow_menu_button.click()
-        unfollow_button = WebDriverWait(self.driver, 20).until(
-            EC.presence_of_element_located((By.XPATH, """/html/body/div[4]/div/div/div/div[3]/button[1]"""))
-        )
-        unfollow_button.click()
+        try:
+            unfollow_button = WebDriverWait(self.driver, 5).until(
+                EC.presence_of_element_located((By.XPATH, """/html/body/div[5]/div/div/div/div[3]/button[1]"""))
+            )
+            unfollow_button.click()
+            return True
+        except TimeoutException:
+            try:
+                unfollow_button = WebDriverWait(self.driver, 5).until(
+                    EC.presence_of_element_located((By.XPATH, """/html/body/div[4]/div/div/div/div[3]/button[1]"""))
+                )
+                unfollow_button.click()
+                return True
+            except TimeoutException:
+                return False
+        return False
 
     def follow_user(self):
         """
@@ -263,23 +283,35 @@ class InstagramBot:
         else:
             return False
         if option1:
-            self.driver.find_element_by_xpath(
-                """/html/body/div[1]/section/main/div/header/section/div[1]/div[1]/div/div/button""").click()
-            return True
+            follow_button = self.driver.find_element_by_xpath(
+                """/html/body/div[1]/section/main/div/header/section/div[1]/div[1]/div/div/button""")
+            if follow_button.text == "Follow" or follow_button.text == "Follow Back":
+                follow_button.click()
+                return True
+            else:
+                return False
         elif option2:
-            self.driver.find_element_by_xpath(
-                """/html/body/div[1]/section/main/div/header/section/div[1]/div[1]/div/div/div/span/span[1]/button""").click()
-            return True
+            follow_button = self.driver.find_element_by_xpath(
+                """/html/body/div[1]/section/main/div/header/section/div[1]/div[1]/div/div/div/span/span[1]/button""")
+            if follow_button.text == "Follow" or follow_button.text == "Follow Back":
+                follow_button.click()
+                return True
+            else:
+                return False
         return False
         # /html/body/div[1]/section/main/div/header/section/div[1]/div[1]/div/div/button
         # /html/body/div[1]/section/main/div/header/section/div[1]/div[1]/div/div/div/span/span[1]/button
+
+        # /html/body/div[1]/section/main/div/header/section/div[1]/div[1]/div/div[2]/div/span/span[1]/button   ako veche go sledvam
+        # /html/body/div[1]/section/main/div/header/section/div[1]/div[1]/div/div/div/span/span[1]/button      ako nito toi me nito az nego
+        # /html/body/div[1]/section/main/div/header/section/div[1]/div[1]/div/div/div/span/span[1]/button      ako toi me sledva az nego ne
 
 
 class UnfollowUsers(InstagramBot):
     def read_all_user_followings(self, user):
         """
         :param user: user to scrape
-        :return: full list of followers
+        :return: full list of followings
         """
         self.navigate_to_home_page(user)
         all_user_followings = self.get_following(-1)
@@ -294,6 +326,7 @@ class UnfollowUsers(InstagramBot):
         try:
             user_list = self.read_all_user_followings(user)
         except:
+            print("check_if_user_follows_back bate except chasta")
             return False
         if self.username in user_list:
             return True
@@ -308,36 +341,42 @@ class UnfollowUsers(InstagramBot):
         for the program to check if he is following back
         scans num_to_unfollow * 10
         """
-        self.login()
-        self.navigate_to_home_page()
-        following_list = self.get_following(num_to_unfollow * 10)
-        random.shuffle(following_list)
-        users_unfollowed_counter = 0
-        for user in following_list:
-            if max_to_check == -1:
-                if not self.check_if_user_follows_back(user):
-                    users_unfollowed_counter = users_unfollowed_counter + 1
-                    self.navigate_to_home_page(user)
-                    self.unfollow_user()
-            elif max_to_check > 0:
-                self.navigate_to_home_page(user)
-                following_count = WebDriverWait(self.driver, 20).until(
-                    EC.presence_of_element_located(
-                        (By.XPATH, """/html/body/div[1]/section/main/div/header/section/ul/li[3]/a/span"""))
-                )
-                num = int(following_count.text.replace(',', ''))
-                if num > max_to_check:
-                    users_unfollowed_counter = users_unfollowed_counter + 1
-                    time.sleep(random.randint(2, 4))
-                    self.unfollow_user()
-                    time.sleep(random.randint(2, 4))
-                else:
+        num_unfollowed = 0
+        while num_to_unfollow > num_unfollowed:
+            self.navigate_to_home_page()
+            following_list = self.get_following(num_to_unfollow * 10)
+            random.shuffle(following_list)
+            for user in following_list:
+                if max_to_check == -1:
                     if not self.check_if_user_follows_back(user):
-                        users_unfollowed_counter = users_unfollowed_counter + 1
                         self.navigate_to_home_page(user)
-                        self.unfollow_user()
-            if users_unfollowed_counter >= num_to_unfollow:
-                return
+                        if self.unfollow_user():
+                            num_unfollowed = num_unfollowed + 1
+                            self.my_logger.log_unfollow(user)
+                            if num_unfollowed >= num_to_unfollow:
+                                return
+                elif max_to_check > 0:
+                    self.navigate_to_home_page(user)
+                    num_of_following = self.get_following_number()
+                    if num_of_following > max_to_check:
+                        time.sleep(random.randint(2, 4))
+                        self.navigate_to_home_page(user)
+                        if self.unfollow_user():
+                            num_unfollowed = num_unfollowed + 1
+                            self.my_logger.log_unfollow(user)
+                            if num_unfollowed >= num_to_unfollow:
+                                return
+                        time.sleep(random.randint(2, 4))
+                    else:
+                        if not self.check_if_user_follows_back(user):
+                            self.navigate_to_home_page(user)
+                            if self.unfollow_user():
+                                num_unfollowed = num_unfollowed + 1
+                                self.my_logger.log_unfollow(user)
+                                if num_unfollowed >= num_to_unfollow:
+                                    return
+        # kogato trqbva da unfollowne
+        # otvarq following taba i preebava sichko kurwata
 
 
 class FollowUsers(InstagramBot):
@@ -388,10 +427,16 @@ class FollowUsers(InstagramBot):
         when opened likes panel
         scroll some
         """
-        likes_panel = WebDriverWait(self.driver, 5).until(
-            EC.presence_of_element_located(
-                (By.XPATH, """/html/body/div[5]/div/div/div[2]/div"""))
-        )
+        try:
+            likes_panel = WebDriverWait(self.driver, 4).until(
+                EC.presence_of_element_located(
+                    (By.XPATH, """/html/body/div[6]/div/div/div[2]/div"""))
+            )
+        except TimeoutException:
+            likes_panel = WebDriverWait(self.driver, 4).until(
+                EC.presence_of_element_located(
+                    (By.XPATH, """/html/body/div[5]/div/div/div[2]/div"""))
+            )
         self.driver.execute_script('arguments[0].scrollTop = arguments[0].scrollTop + arguments[0].offsetHeight;',
                                    likes_panel)
 
@@ -428,27 +473,23 @@ class FollowUsers(InstagramBot):
         people with the checks and all...
         """
         num_followed = 0
-        users_followed = []
 
         while num_followed < num_to_follow:
             # opens a random post
             self.open_random_post(self.get_random_user())
 
             # open likes panel
-            likes_button = WebDriverWait(self.driver, 5).until(
-                EC.presence_of_element_located(
-                    (By.XPATH, """/html/body/div[4]/div[2]/div/article/div[3]/section[2]/div/div[2]/button"""))
-            )
+            try:
+                likes_button = WebDriverWait(self.driver, 4).until(
+                    EC.presence_of_element_located(
+                        (By.XPATH, """/html/body/div[5]/div[2]/div/article/div[3]/section[2]/div/div[2]/button"""))
+                )
+            except TimeoutException:
+                likes_button = WebDriverWait(self.driver, 2).until(
+                    EC.presence_of_element_located(
+                        (By.XPATH, """/html/body/div[4]/div[2]/div/article/div[3]/section[2]/div/div[2]/button"""))
+                )
             likes_button.click()
-            # !!!!!!
-            # ponqkoga nqma laikove ako e video fix sus sledene na element
-            # /html/body/div[4]/div[2]/div/article/div[3]/section[2]/div/div[2]/button
-
-            # wait to open before scraping
-            WebDriverWait(self.driver, 5).until(
-                EC.presence_of_element_located(
-                    (By.XPATH, """/html/body/div[4]/div[2]/div/article/div[3]/section[1]/span[1]/button"""))
-            )
 
             users_list = []
             users_scraped = 0
@@ -457,9 +498,11 @@ class FollowUsers(InstagramBot):
                 try:
                     user_element = WebDriverWait(self.driver, 1).until(
                         EC.presence_of_element_located(
-                            (By.XPATH, """/html/body/div[5]/div/div/div[2]/div/div/div[""" + str(
+                            (By.XPATH, """/html/body/div[6]/div/div/div[2]/div/div/div[""" + str(
                                 temp) + """]/div[2]/div[1]/div/span/a"""))
                     )
+                    # /html/body/div[6]/div/div/div[2]/div/div/div[1]/div[2]/div[1]/div/span/a
+                    # /html/body/div[5]/div/div/div[2]/div/div/div[1]/div[2]/div[1]/div/span/a
                     user = user_element.text
                     if user not in users_list:
                         users_list.append(user)
@@ -469,33 +512,43 @@ class FollowUsers(InstagramBot):
                     temp = 1
                     self.scroll()
                     continue
+            """
+            users_list.clear()
+            users_list = [
+                "gibbythesmart",
+                "ll.paradise.voyage.ll",
+                "_____chillwildlife_____",
+                "julia_michels_",
+                "nugie1966",
+                "p_nath_",
+                "ray.shizzle"
+            ]
+            """
 
             for user in users_list:
                 self.navigate_to_home_page(user)
                 if self.is_eligible_for_follow(self.get_followers_number(), self.get_following_number()):
                     if self.follow_user():
                         num_followed = num_followed + 1
-                        users_followed.append(user)
-                        # tuka logvash koi e follownal
+                        self.my_logger.log_follow(user)
                         if num_followed >= num_to_follow:
                             break
 
-        print(users_followed)
 
-"""
 instagram = UnfollowUsers(*read_credentials())
+instagram.login()
 instagram.start_unfollowing(5, 500)
 instagram.driver.quit()
-"""
 
+"""
 instagram = FollowUsers(*read_credentials())
 instagram.login()
 instagram.start_following(5)
 instagram.driver.quit()
-
+"""
 """
 1vi probelm - kato scrolva se bugva i ne zarejda sledvashtite
-2ri problem - kato scrolva spira da zarejda sledvashtite
-3ti problem - ponqkoga prosto skrolva do dolu i nishto ne prai
+2ri problem - ponqkoga prosto skrolva do dolu i nishto ne prai
 (reshenie: dobavi except, koito gi hvashtat logvat gi i produljavat)
+!PRAVI GO S IDta I Classove ne sus XPATH !!!!
 """

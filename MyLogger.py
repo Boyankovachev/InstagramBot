@@ -18,7 +18,7 @@ def get_only_time():
     return x.strftime("%H:%M:%S")
 
 
-class MyLogging:
+class MyLogger:
     def __init__(self):
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger(__name__)
