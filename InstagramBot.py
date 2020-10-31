@@ -96,6 +96,9 @@ class InstagramBot:
         else:
             self.driver.get("https://www.instagram.com/" + user + "/")
 
+    def navigate_to_explore_page(self):
+        self.driver.get("https://www.instagram.com")
+
     def get_following_number(self):
         """
         read number of followings when
@@ -243,7 +246,8 @@ class InstagramBot:
             follow_menu_button.click()
         except TimeoutException:
             follow_menu_button = WebDriverWait(self.driver, 5).until(
-                EC.presence_of_element_located((By.XPATH, """/html/body/div[1]/section/main/div/header/section/div[1]/div[1]/div/div[3]/div/span/span[1]/button"""))
+                EC.presence_of_element_located((By.XPATH,
+                                                """/html/body/div[1]/section/main/div/header/section/div[1]/div[1]/div/div[3]/div/span/span[1]/button"""))
             )
             follow_menu_button.click()
         try:
@@ -535,20 +539,53 @@ class FollowUsers(InstagramBot):
                             break
 
 
+class Simulate(InstagramBot):
+    def scroll(self):
+        """
+        on explore page
+        scroll some
+        """
+        # main_panel = self.driver.find_element_by_xpath("/html/body")
+        # main_panel.send_keys(Keys.PAGE_DOWN)
+
+        # like a post
+        """
+        article = self.driver.find_element_by_tag_name("article")
+        time.sleep(2)
+        footer_element = article.find_element_by_xpath("div[3]")
+        buttons = footer_element.find_elements_by_tag_name("button")
+        buttons[0].click()
+        """
+
+        # find the username of the post
+        """
+        article = self.driver.find_element_by_tag_name("article")
+        links = article.find_elements_by_tag_name("a")
+        print(links[1].text)
+        """
+
+
+"""
 instagram = UnfollowUsers(*read_credentials())
 instagram.login()
 instagram.start_unfollowing(5, 500)
 instagram.driver.quit()
-
+"""
 """
 instagram = FollowUsers(*read_credentials())
 instagram.login()
 instagram.start_following(5)
 instagram.driver.quit()
 """
+instagram = Simulate(*read_credentials())
+instagram.login()
+instagram.scroll()
 """
 1vi probelm - kato scrolva se bugva i ne zarejda sledvashtite
 2ri problem - ponqkoga prosto skrolva do dolu i nishto ne prai
 (reshenie: dobavi except, koito gi hvashtat logvat gi i produljavat)
 !PRAVI GO S IDta I Classove ne sus XPATH !!!!
 """
+# /html/body/div[1]/section/main/section/div[1]/div[2]/div/article[1]
+# /html/body/div[1]/section/main/section/div[1]/div[2]/div/article[2]
+# /html/body/div[1]/section/main/section/div[1]/div[2]/div/article[3]
