@@ -6,6 +6,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import ElementClickInterceptedException
 import MyLogger
 import random
 
@@ -540,29 +541,55 @@ class FollowUsers(InstagramBot):
 
 
 class Simulate(InstagramBot):
-    def scroll(self):
+    def scroll(self, direction=True):
         """
         on explore page
         scroll some
+        direction = false:
+            scroll up
         """
-        # main_panel = self.driver.find_element_by_xpath("/html/body")
-        # main_panel.send_keys(Keys.PAGE_DOWN)
+        main_panel = self.driver.find_element_by_xpath("/html/body")
+        if direction:
+            main_panel.send_keys(Keys.PAGE_DOWN)
+        else:
+            main_panel.send_keys(Keys.PAGE_UP)
 
-        # like a post
+    def simulate(self, num_to_like):
         """
-        article = self.driver.find_element_by_tag_name("article")
+        once logged in
+        simulate scrolling and liking
+        """
         time.sleep(2)
-        footer_element = article.find_element_by_xpath("div[3]")
-        buttons = footer_element.find_elements_by_tag_name("button")
-        buttons[0].click()
-        """
-
-        # find the username of the post
-        """
-        article = self.driver.find_element_by_tag_name("article")
-        links = article.find_elements_by_tag_name("a")
-        print(links[1].text)
-        """
+        last_post = ""
+        num_of_posts_liked = 0
+        while num_of_posts_liked < num_to_like:
+            for x in range(4):
+                self.scroll()
+                time.sleep(random.randint(1, 2))
+            article = self.driver.find_element_by_tag_name("article")
+            links = article.find_elements_by_tag_name("a")
+            print(links[1].text)
+            if links[1].text == last_post:
+                last_post = links[1].text
+                continue
+            last_post = links[1].text
+            if random.randint(3, 4) == 4:
+                print("sea she likne")
+                footer_element = article.find_element_by_xpath("div[3]")
+                buttons = footer_element.find_elements_by_tag_name("button")
+                flag = False
+                counter = 0
+                while not flag and counter < 3:
+                    try:
+                        counter = counter + 1
+                        buttons[0].click()
+                        time.sleep(random.randint(2, 3))
+                        flag = True
+                        self.my_logger.log_like()
+                        num_of_posts_liked = num_of_posts_liked + 1
+                    except ElementClickInterceptedException:
+                        self.scroll(False)
+                        continue
 
 
 """
@@ -579,13 +606,10 @@ instagram.driver.quit()
 """
 instagram = Simulate(*read_credentials())
 instagram.login()
-instagram.scroll()
+instagram.simulate(3)
 """
 1vi probelm - kato scrolva se bugva i ne zarejda sledvashtite
 2ri problem - ponqkoga prosto skrolva do dolu i nishto ne prai
 (reshenie: dobavi except, koito gi hvashtat logvat gi i produljavat)
 !PRAVI GO S IDta I Classove ne sus XPATH !!!!
 """
-# /html/body/div[1]/section/main/section/div[1]/div[2]/div/article[1]
-# /html/body/div[1]/section/main/section/div[1]/div[2]/div/article[2]
-# /html/body/div[1]/section/main/section/div[1]/div[2]/div/article[3]
