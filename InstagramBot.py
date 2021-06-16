@@ -55,7 +55,7 @@ class InstagramBot:
         self.password = password
         self.driver = webdriver.Chrome('C:\chromedriver.exe')
         self.driver.get("https://www.instagram.com/")
-        self.my_logger = MyLogger.MyLogger()
+        #self.my_logger = MyLogger.MyLogger()
 
     def login(self):
         """
@@ -80,10 +80,17 @@ class InstagramBot:
             EC.presence_of_element_located((By.XPATH, """//*[@id="react-root"]/section/main/div/div/div/div/button"""))
         )
         login_info_button.click()
-        notifications_button_wait = WebDriverWait(self.driver, 20).until(
-            EC.presence_of_element_located((By.XPATH, """/html/body/div[4]/div/div/div/div[3]/button[2]"""))
-        )
+        try:
+            notifications_button_wait = WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, """/html/body/div[3]/div/div/div/div[3]/button[2]"""))
+            )
+        except TimeoutException:
+            notifications_button_wait = WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, """/html/body/div[4]/div/div/div/div[3]/button[2]"""))
+            )
         notifications_button_wait.click()
+        #/html/body/div[3]/div/div/div/div[3]/button[2]
+        #/html/body/div[4]/div/div/div/div[3]/button[2]
 
     def navigate_to_home_page(self, user=None):
         """
@@ -182,6 +189,17 @@ class InstagramBot:
         )
         following_button.click()
 
+    def open_followers_tab(self):
+        """
+        opens the following tab when
+        located on any home page
+        """
+        following_button = WebDriverWait(self.driver, 5).until(
+            EC.presence_of_element_located((By.XPATH, """//*[@id="react-root"]/section/main/div/header/section/ul
+             /li[2]/a"""))
+        )
+        following_button.click()
+
     def get_following(self, num_to_scrape=10):
         """
         :returns list of names of followings
@@ -202,6 +220,58 @@ class InstagramBot:
             return
 
         self.open_following_tab()
+        time.sleep(2)
+
+        li = []
+        while len(li) < num_to_scrape:
+            try:
+                ul = self.driver.find_element_by_xpath("""/html/body/div[5]/div/div/div[2]/ul""")
+            except NoSuchElementException:
+                ul = self.driver.find_element_by_xpath("""/html/body/div[4]/div/div/div[2]/ul""")
+            li = ul.find_elements_by_tag_name("li")
+            # /html/body/div[4]/div/div/div[2]/ul - not such element exception mi hvurli
+            # /html/body/div[5]/div/div/div[2]/ul - sega maika mu deba
+
+            following_panel = self.driver.find_element_by_xpath("//div[@class='isgrP']")
+            self.driver.execute_script('arguments[0].scrollTop = arguments[0].scrollTop + arguments[0].offsetHeight;',
+                                       following_panel)
+
+        try:
+            ul = self.driver.find_element_by_xpath("""/html/body/div[5]/div/div/div[2]/ul""")
+        except NoSuchElementException:
+            ul = self.driver.find_element_by_xpath("""/html/body/div[4]/div/div/div[2]/ul""")
+        li = ul.find_elements_by_tag_name("li")
+
+        following_list_ = []
+        j = 1
+        for item in li:
+            if j > num_to_scrape:
+                break
+            following_list_.append(item.text.split("\n")[0])
+            j = j + 1
+
+        return following_list_
+
+    def getFollowers(self, num_to_scrape=10):
+        """
+        :returns list of names of followers
+        located on any home page tab
+        Args:
+            num_to_scrape - how much usernames to read
+                -1 to scrape all
+        test1 - kato mu dadesh da scrapne vsichki raboti
+            ako ne se poqvqt promeni mejduvremenni raboti
+        test2 - kato mu dadesh da scrapne all,
+            se bugva ako ima promeni v procesa
+        """
+        time.sleep(2)
+        if num_to_scrape == -1:
+            num_to_scrape = self.get_followers_number()
+            time.sleep(1)
+        elif num_to_scrape <= 0:
+            return
+
+        self.open_followers_tab()
         time.sleep(2)
 
         li = []
@@ -592,6 +662,65 @@ class Simulate(InstagramBot):
                         continue
 
 
+class ReadUnfollowers():
+    def __init__(self):
+        pass
+
+    def readUnfollowers(self):
+        self.driver = webdriver.Chrome('C:\chromedriver.exe')
+        self.driver.get(
+            "file:///C:/Users/bokov/Desktop/nFollowers%20%E2%80%93%20Instagram%20followers%20tracker%20_%20Dashboard.html")
+        table = self.driver.find_element_by_xpath("""/html/body/div[3]/div[1]/table""")
+        for row in table.find_elements_by_tag_name("tr"):
+            if row.get_attribute("class") != "notfollowed":
+                continue
+            i = 0
+            for td in row.find_elements_by_tag_name("td"):
+                i = i + 1
+                if i == 3:
+                    nameElement = td.find_element_by_tag_name("a")
+                    name = nameElement.text
+                    print(name)
+
+    def readFile(self):
+        file = open("unfollowers.txt", "r")
+        users_list = []
+        for user in file:
+            users_list.append(user.strip())
+        return users_list
+
+    def unfollow(self, num, minWait, maxWait):
+        instagram = InstagramBot(*read_credentials())
+        instagram.login()
+        users = self.readFile()
+        i = 1
+        for user in users:
+            instagram.navigate_to_home_page(user)
+            time.sleep(random.randint(minWait, maxWait))
+            try:
+                instagram.unfollow_user()
+                print(str(i) + " " + user)
+                time.sleep(random.randint(minWait, maxWait))
+                i = i + 1
+                if i == num+1:
+                    break
+            except TimeoutException:
+                i = i + 1
+                print(str(i) + " " + user + "  Error")
+                pass
+
+
+# "/html/body/div[3]/div[1]/table/tbody/tr[1]/td[5]"
+print('Enter num to unfollow: ')
+num = int(input())
+print('Enter min to wait: ')
+minWait = int(input())
+print('Enter max to wait: ')
+maxWait = int(input())
+readUnfollowers = ReadUnfollowers()
+# readUnfollowers.readUnfollowers()
+readUnfollowers.unfollow(num, minWait, maxWait)
+input()
 """
 instagram = UnfollowUsers(*read_credentials())
 instagram.login()
@@ -604,9 +733,16 @@ instagram.login()
 instagram.start_following(5)
 instagram.driver.quit()
 """
+"""
 instagram = Simulate(*read_credentials())
 instagram.login()
 instagram.simulate(3)
+"""
+"""
+instagram = ReadUnfollowers(*read_credentials())
+instagram.login()
+instagram.readUnfollowers()
+"""
 """
 1vi probelm - kato scrolva se bugva i ne zarejda sledvashtite
 2ri problem - ponqkoga prosto skrolva do dolu i nishto ne prai
